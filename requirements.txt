@@ -1,0 +1,13 @@
+streamlit
+
+langchain
+langchain_openai
+langchain_community
+
+pypdf
+
+chromadb
+
+sentence-transformers
+
+python-dotenv
