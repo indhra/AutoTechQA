@@ -11,8 +11,8 @@ def load_rag_chain():
 
 user_question = st.text_input("Enter your question about trucks:")
 if user_question:
-    with st.spinner("Searching manuals for answer..."):
-        rag_chain = load_rag_chain()
+    st.spinner("Searching manuals for answer...")
+    rag_chain = load_rag_chain()
     response = rag_chain.invoke(user_question)
     st.subheader("Answer:")
     st.write(response)
