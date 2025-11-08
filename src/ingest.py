@@ -1,7 +1,12 @@
 # read pdf from data source folder and save as vector database using chromadb in vector_store folder
 import os
+import sys
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# Add project root to path to import config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import src.config as config
 
 
 
@@ -12,7 +17,7 @@ def ingest_pdfs_to_vector_store(input_folder, output_folder, skip_existing=True)
     from langchain_huggingface import HuggingFaceEmbeddings
 
     embeddings = HuggingFaceEmbeddings(
-        model_name='nomic-ai/nomic-embed-text-v1',
+        model_name=config.embedding_model_name,
         model_kwargs={'trust_remote_code': True}
     )
     if not os.listdir(input_folder):
@@ -39,7 +44,7 @@ def ingest_pdfs_to_vector_store(input_folder, output_folder, skip_existing=True)
             # Read only first 30 pages
             documents = documents[:30]
             text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000, chunk_overlap=200)
+            chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap)
             texts = text_splitter.split_documents(documents)
             
             vector_store = Chroma.from_documents(
@@ -55,12 +60,9 @@ def ingest_pdfs_to_vector_store(input_folder, output_folder, skip_existing=True)
 
 
 if __name__ == '__main__':
-    # Get the script directory and construct absolute paths
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir)
-    
-    input_data_folder = os.path.join(project_root, 'data_source')
-    output_vector_store_folder = os.path.join(project_root, 'vector_store')
+    # Use paths from config
+    input_data_folder = config.DATA_SOURCE_FOLDER
+    output_vector_store_folder = config.VECTOR_STORE_FOLDER
     
     print(f'Input Data Folder: {input_data_folder}')
     print(f'Output Vector Store Folder: {output_vector_store_folder}')
