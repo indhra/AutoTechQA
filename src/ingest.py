@@ -5,7 +5,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 
-def ingest_pdfs_to_vector_store(input_folder, output_folder):
+def ingest_pdfs_to_vector_store(input_folder, output_folder, skip_existing=True):
+    """Ingest PDF files from the input folder, split the text into chunks
+    """
     from langchain_community.vectorstores import Chroma
     from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -18,7 +20,7 @@ def ingest_pdfs_to_vector_store(input_folder, output_folder):
     
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-        
+
     print('Using HuggingFace \
           Embeddings with model nomic-ai/nomic-embed-text-v1')
     print("only PDF files will be ingested from the data_source folder.")
@@ -26,23 +28,30 @@ def ingest_pdfs_to_vector_store(input_folder, output_folder):
     for filename in os.listdir(input_folder):
         if filename.endswith('.pdf'):
             file_path = os.path.join(input_folder, filename)
+            out_folder = os.path.join(output_folder, filename.replace('.pdf', '_chroma'))
+            if os.listdir(out_folder) and skip_existing==True:
+                print(f'Vector store for {filename} already exists. Skipping ingestion.')
+                continue
             # use recursive character text splitter
             
             loader = PyPDFLoader(file_path)
             documents = loader.load()
+            # Read only first 30 pages
+            documents = documents[:30]
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=10000, chunk_overlap=100)
+            chunk_size=1000, chunk_overlap=200)
             texts = text_splitter.split_documents(documents)
             
             vector_store = Chroma.from_documents(
-                texts,
-                embeddings,
-                persist_directory=os.path.join(output_folder, filename.replace('.pdf', '_chroma'))
+            texts,
+            embeddings,
+            persist_directory=out_folder
             )
             # vector_store.persist()
 
  
             print(f'Ingested and saved vector store for {filename}')
+    print('Ingestion complete.')
 
 
 if __name__ == '__main__':
@@ -56,4 +65,6 @@ if __name__ == '__main__':
     print(f'Input Data Folder: {input_data_folder}')
     print(f'Output Vector Store Folder: {output_vector_store_folder}')
 
-    ingest_pdfs_to_vector_store(input_data_folder, output_vector_store_folder)
+    ingest_pdfs_to_vector_store(input_data_folder, 
+                                output_vector_store_folder,
+                                  skip_existing=True)
