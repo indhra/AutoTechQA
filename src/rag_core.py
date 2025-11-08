@@ -3,6 +3,7 @@ import dotenv
 
 from langchain_openai import ChatOpenAI
 from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,12 +15,15 @@ os.getenv("OPENAI_API_KEY")
 
 chat_model = ChatOpenAI(temperature=0, model=config.llm_model_name)
 
-embedding_model_name = config.embedding_model_name
+embeddings = HuggingFaceEmbeddings(
+    model_name=config.embedding_model_name,
+    model_kwargs={'trust_remote_code': True}
+)
 
 
 vector_store = Chroma(
     persist_directory=config.VECTOR_STORE_FOLDER,
-    embedding_function=embedding_model_name)
+    embedding_function=embeddings)
 
 retriever = vector_store.as_retriever(search_kwargs={'k': config.TOP_K_RETRIEVER})
 
@@ -28,7 +32,7 @@ retriever = vector_store.as_retriever(search_kwargs={'k': config.TOP_K_RETRIEVER
 from langchain_core.prompts import ChatPromptTemplate
 
 prompt_string = """
-You are an expert assistant for automotive battery R&D.
+You are an expert assistant for automotive trucks and buses.
 Answer the user's question based *only* on the following context.
 If the answer is not found in the context, say "I could not find an answer in the provided manuals."
 
@@ -50,8 +54,11 @@ def get_rag_chain():
     prompt = chat_prompt 
     
     # the LCEL chain
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+    
     rag_chain = (
-        {"context":retriever_final, "question":RunnablePassthrough()}  
+        {"context": retriever_final | format_docs, "question": RunnablePassthrough()}  
         | prompt
         | llm
         | StrOutputParser()
