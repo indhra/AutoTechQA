@@ -1,0 +1,2 @@
+# AutoTechQA
+AutoTechQA is an advanced AI-powered question-answering system designed to assist users in finding accurate and relevant information quickly. Leveraging state-of-the-art natural language processing techniques, AutoTechQA can understand complex queries and provide precise answers from a vast knowledge base from automobile open source technical datasets.
